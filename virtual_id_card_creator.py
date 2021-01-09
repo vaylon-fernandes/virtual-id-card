@@ -1,9 +1,12 @@
 import tkinter as tk
+from tkinter import Label, StringVar, Toplevel, messagebox
 import tkinter.font as tkFont
-from tkinter.filedialog import askopenfile
+from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import askyesno
 from tkcalendar import DateEntry
+from PIL import Image, ImageTk
 from random import randint
+import pyqrcode
 from pyperclip import copy
 
 class App:
@@ -55,7 +58,6 @@ class App:
         ft = tkFont.Font(family='Times',size=10)
         mobile_number_label["font"] = ft
         mobile_number_label["fg"] = "#333333"
-        mobile_number_label["justify"] = "center"
         mobile_number_label["text"] = "Mobile Number"
         mobile_number_label.place(x=10,y=220,width=91,height=30)
 
@@ -67,55 +69,58 @@ class App:
         address_label["text"] = "Address"
         address_label.place(x=30,y=260,width=70,height=25)
 
-        picture_label=tk.Label(root)
+        self.picture_label=tk.Label(root)
         ft = tkFont.Font(family='Times',size=10)
-        picture_label["font"] = ft
-        picture_label["fg"] = "#333333"
-        picture_label["justify"] = "center"
-        picture_label["text"] = "Picture"
-        picture_label.place(x=340,y=50,width=70,height=25)
+        self.picture_label["font"] = ft
+        self.picture_label["fg"] = "#333333"
+        self.picture_label["justify"] = "center"
+        self.picture_label["text"] = "Picture"
+        self.picture_label.place(x=340,y=50,width=70,height=25)
 
-        name_entry=tk.Entry(root)
-        name_entry["borderwidth"] = "1px"
-        ft = tkFont.Font(family='Times',size=10)
-        name_entry["font"] = ft
-        name_entry["fg"] = "#333333"
-        name_entry["justify"] = "center"
-        name_entry.place(x=110,y=70,width=147,height=25)
+        vcmd = root.register(self.validate_name)
 
-        dob_entry=DateEntry(root)
-        dob_entry["width"] = 12
+        self.name_entry=tk.Entry(root)
+        self.name_entry["borderwidth"] = "1px"
         ft = tkFont.Font(family='Times',size=10)
-        dob_entry["font"] = ft
-        dob_entry["foreground"] = "white"
-        dob_entry["background"] = "darkblue"
-        dob_entry.place(x=110,y=140,width=70,height=25)
+        self.name_entry["font"] = ft
+        self.name_entry["fg"] = "#333333"
+        self.name_entry["validate"]="key"
+        self.name_entry["validatecommand"]= (vcmd, '%S')
+        self.name_entry.place(x=110,y=70,width=147,height=25)
 
-        blood_group_entry=tk.Entry(root)
-        blood_group_entry["borderwidth"] = "1px"
+        self.dob_entry=DateEntry(root)
+        self.dob_entry["width"] = 12
         ft = tkFont.Font(family='Times',size=10)
-        blood_group_entry["font"] = ft
-        blood_group_entry["fg"] = "#333333"
-        blood_group_entry["justify"] = "center"
-        blood_group_entry.place(x=110,y=180,width=70,height=25)
+        self.dob_entry["font"] = ft
+        self.dob_entry["foreground"] = "white"
+        self.dob_entry["background"] = "darkblue"
+        self.dob_entry.place(x=110,y=140,width=70,height=25)
+
+        self.blood_group_entry=tk.Entry(root)
+        self.blood_group_entry["borderwidth"] = "1px"
+        ft = tkFont.Font(family='Times',size=10)
+        self.blood_group_entry["font"] = ft
+        self.blood_group_entry["fg"] = "#333333"
+        self.blood_group_entry.place(x=110,y=180,width=70,height=25)
+    
+        vcmd = root.register(self.validate)
 
         mobile_number_entry=tk.Entry(root)
         mobile_number_entry["borderwidth"] = "1px"
         ft = tkFont.Font(family='Times',size=10)
         mobile_number_entry["font"] = ft
         mobile_number_entry["fg"] = "#333333"
-        mobile_number_entry["justify"] = "center"
+        mobile_number_entry["validate"]="key"
+        mobile_number_entry["validatecommand"] = (vcmd,'%P')
         mobile_number_entry.place(x=110,y=220,width=147,height=25)
-        mobile_number_entry["validatecommand"] = "vcmd"
 
-        address_entry=tk.Entry(root)
-        address_entry["borderwidth"] = "1px"
+        self.address_entry=tk.Text(root)
+        self.address_entry["borderwidth"] = "1px"
         ft = tkFont.Font(family='Times',size=10)
-        address_entry["font"] = ft
-        address_entry["fg"] = "#333333"
-        address_entry["justify"] = "center"
-        address_entry.place(x=110,y=260,width=147,height=58)
-
+        self.address_entry["font"] = ft
+        self.address_entry["fg"] = "#333333"
+        self.address_entry.place(x=110,y=260,width=147,height=58)
+        
         gen_id_button=tk.Button(root)
         gen_id_button["bg"] = "#efefef"
         ft = tkFont.Font(family='Times',size=10)
@@ -165,14 +170,6 @@ class App:
         self.id_label["text"] = id_text
         self.id_label.place(x=110,y=110,width=70,height=25)
 
-        display_picture=tk.Label(root)
-        ft = tkFont.Font(family='Times',size=10)
-        display_picture["font"] = ft
-        display_picture["fg"] = "#333333"
-        display_picture["justify"] = "center"
-        display_picture["text"] = ""
-        display_picture.place(x=280,y=130,width=192,height=192)
-
         virtual_id_label=tk.Label(root)
         ft = tkFont.Font(family='Times',size=10)
         virtual_id_label["font"] = ft
@@ -187,7 +184,6 @@ class App:
         self.image_pick_entry["font"] = ft
         self.image_pick_entry["fg"] = "#333333"
         self.image_pick_entry["justify"] = "center"
-        self.image_pick_entry["text"] = "Choose Image or Enter path"
         self.image_pick_entry.place(x=280,y=90,width=128,height=25)
 
         choose_image_btn=tk.Button(root)
@@ -208,7 +204,7 @@ class App:
         confirm_button["justify"] = "center"
         confirm_button["text"] = "Confirm"
         confirm_button.place(x=490,y=90,width=70,height=25)
-        confirm_button["command"] = self.confirm
+        confirm_button["command"] = lambda: self.confirm(self.get_path())
 
         exit_button=tk.Button(root)
         exit_button["bg"] = "#efefef"
@@ -220,34 +216,91 @@ class App:
         exit_button.place(x=260,y=410,width=70,height=25)
         exit_button["command"] = self.exit
 
-    def vcmd(self):
-        print("command")
+    def validate(self, text):
+        if text == "":
+            return True
+        elif text.isdigit():
+            return True
+        else:
+            return False
 
+    def validate_name(self, text):
+        if text == "":
+            return True
+        elif text.isalpha():
+            return True
+        else:
+            return False
+
+    def get_name(self):
+        return self.name_entry.get().title()
+    
     def random_id(self):
         lower_limit = 1111111111
         upper_limit = 9999999999
         return randint(lower_limit, upper_limit)
 
+    def get_date(self):
+        return self.dob_entry.get()
+    
+    def get_blood_group(self):
+        return self.blood_group_entry.get()
+    
+    def get_address(self):
+        return self.address_entry.get("1.0", "end")
+
+    def gen_qr(self):
+        data = f'''
+        Name: {self.get_name()}
+         DoB: {self.get_date()}
+        Blood Group: {self.get_blood_group()}
+        Address: {self.get_address()}
+        '''
+        qr = pyqrcode.create(data)
+        qr.png("virt_id_qr.png", scale=2)
+
     def gen_id(self):
-        print("command")
+        self.gen_qr()
 
     def show_qr(self):
-        print("command")
-
+        new_win = tk.Toplevel(root)
+        img = Image.open("virt_id_qr.png")
+        img = img.resize((192, 192))
+        tkimage= ImageTk.PhotoImage(img)
+        image_lbl = Label(new_win, image=tkimage)
+        image_lbl.image = tkimage
+        image_lbl.pack()
 
     def show_id(self):
-        print("command")
-
+        print(self.get_date())
 
     def choose_image(self):
-        path = askopenfile(filetypes=[('Jpeg files','*.jpg''*.jpeg'), ('PNG files', '*.png')])
-        return path 
+        path = askopenfilename(initialdir='/home/vaylon/github/qr_id/', filetypes=[('Jpeg files','*.jpg''*.jpeg'), ('PNG files', '*.png')])
+        self.set_path(path) 
 
-    def confirm(self):
-        print("command")
+    def set_path(self, path):
+        self.image_pick_entry.insert(0, path)
+    
+    def get_path(self):
+        return self.image_pick_entry.get()
 
+    def get_image(self):
+        image = Image.open(self.get_path())
+        image = image.resize((192, 192))
+        tkimage = ImageTk.PhotoImage(image)
+        return tkimage
+    
+    def confirm(self, path):
+        image = Image.open(path)
+        image = image.resize((192, 192))
+        tkimage = ImageTk.PhotoImage(image)
+        display_picture = tk.Label(root, image=tkimage)
+        display_picture.image=tkimage
+        display_picture.place(x=290,y=130,width=192,height=192)
+       
     def copy_id(self):
         text = copy(self.id_label['text'])
+        messagebox.showinfo("Copied to clipboard", "Your ID has been copied to the clipboard")
 
     def exit(self):
         ask_exit = askyesno("Exit", "Do you want to exit?")
