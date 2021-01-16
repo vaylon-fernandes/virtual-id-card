@@ -4,7 +4,7 @@ import tkinter.font as tkFont
 from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import askyesno
 from tkcalendar import DateEntry
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 from random import randint
 import pyqrcode
 from pyperclip import copy
@@ -86,6 +86,7 @@ class App:
         self.name_entry["fg"] = "#333333"
         self.name_entry["validate"]="key"
         self.name_entry["validatecommand"]= (vcmd, '%S')
+        self.name_entry.bind('<space>')
         self.name_entry.place(x=110,y=70,width=147,height=25)
 
         self.dob_entry=DateEntry(root)
@@ -219,6 +220,8 @@ class App:
     def validate(self, text):
         if text == "":
             return True
+        elif text == "<space>":
+            return True
         elif text.isdigit():
             return True
         else:
@@ -226,6 +229,8 @@ class App:
 
     def validate_name(self, text):
         if text == "":
+            return True
+        elif text.isspace():
             return True
         elif text.isalpha():
             return True
@@ -240,6 +245,9 @@ class App:
         upper_limit = 9999999999
         return randint(lower_limit, upper_limit)
 
+    def get_id(self):
+        return self.id_label["text"]
+
     def get_date(self):
         return self.dob_entry.get()
     
@@ -249,23 +257,50 @@ class App:
     def get_address(self):
         return self.address_entry.get("1.0", "end")
 
-    def gen_qr(self):
-        data = f'''
+    def get_details(self):
+        details = f'''
         Name: {self.get_name()}
-         DoB: {self.get_date()}
+        ID: {self.get_id()}
+        DoB: {self.get_date()}
         Blood Group: {self.get_blood_group()}
         Address: {self.get_address()}
         '''
+        return details
+        
+    def gen_qr(self):
+        data = self.get_details()
         qr = pyqrcode.create(data)
         qr.png("virt_id_qr.png", scale=2)
 
-    def gen_id(self):
+    def get_qr(self):
         self.gen_qr()
+        qr = Image.open('virt_id_qr.png')
+        return qr
+
+    def get_template(self):
+        path = "templates/vid.png"
+        image = Image.open(path)
+        return image
+
+    def load_font(self):
+        font = ImageFont.truetype('fonts/Calibri Regular.ttf', 40)
+        return font
+
+    def gen_id(self):
+        details = self.get_details()
+        image = self.get_image()
+        qr = self.get_qr()
+        id_template = self.get_template()
+        id_template.paste(im=image, box=(33, 175))
+        id_template.paste(im=qr, box=(815, 463))
+        edit_image = ImageDraw.Draw(id_template)
+        edit_image.text((200, 150), text=details, font=self.load_font(), fill=128)
+        id_template.save("Id.png")
 
     def show_qr(self):
         new_win = tk.Toplevel(root)
         img = Image.open("virt_id_qr.png")
-        img = img.resize((192, 192))
+        img = img.resize((186, 186))
         tkimage= ImageTk.PhotoImage(img)
         image_lbl = Label(new_win, image=tkimage)
         image_lbl.image = tkimage
@@ -275,10 +310,11 @@ class App:
         print(self.get_date())
 
     def choose_image(self):
-        path = askopenfilename(initialdir='/home/vaylon/github/qr_id/', filetypes=[('Jpeg files','*.jpg''*.jpeg'), ('PNG files', '*.png')])
+        path = askopenfilename(initialdir='/home/vaylon/github/qr_id/', filetypes=[('Jpeg files','*.jpg *.jpeg'), ('PNG files', '*.png')])
         self.set_path(path) 
 
     def set_path(self, path):
+        self.clear_image_pick_entry()
         self.image_pick_entry.insert(0, path)
     
     def get_path(self):
@@ -287,12 +323,13 @@ class App:
     def get_image(self):
         image = Image.open(self.get_path())
         image = image.resize((192, 192))
-        tkimage = ImageTk.PhotoImage(image)
-        return tkimage
+        return image
     
+    def clear_image_pick_entry(self):
+        self.image_pick_entry.delete(0,"end")
+
     def confirm(self, path):
-        image = Image.open(path)
-        image = image.resize((192, 192))
+        image = self.get_image()
         tkimage = ImageTk.PhotoImage(image)
         display_picture = tk.Label(root, image=tkimage)
         display_picture.image=tkimage
