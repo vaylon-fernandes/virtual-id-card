@@ -307,7 +307,13 @@ class App:
         image_lbl.pack()
 
     def show_id(self):
-        print(self.get_date())
+        new_win = tk.Toplevel(root)
+        img = Image.open("id.png")
+        tkimage= ImageTk.PhotoImage(img)
+        image_lbl = Label(new_win, image=tkimage)
+        image_lbl.image = tkimage
+        image_lbl.pack()
+
 
     def choose_image(self):
         path = askopenfilename(initialdir='/home/vaylon/github/qr_id/', filetypes=[('Jpeg files','*.jpg *.jpeg'), ('PNG files', '*.png')])
