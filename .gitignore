@@ -146,6 +146,7 @@ dmypy.json
 # Images
 *.svg
 *.png
+!templates/*.png 
 
 ### vscode ###
 .vscode/*
