@@ -1,15 +1,19 @@
 import tkinter as tk
-from tkinter import Label, StringVar, Toplevel, messagebox
 import tkinter.font as tkFont
-from tkinter.filedialog import askopenfilename
-from tkinter.messagebox import askyesno
-from tkcalendar import DateEntry
-from PIL import Image, ImageTk, ImageDraw, ImageFont
 from random import randint
-import pyqrcode
-from pyperclip import copy
+from tkinter import Label, StringVar, Toplevel, messagebox
+from tkinter.constants import COMMAND
+from tkinter.filedialog import (askopenfilename, asksaveasfilename)
+from tkinter.messagebox import RETRYCANCEL, askyesno
 
-class App:
+import pyqrcode
+from PIL import Image, ImageDraw, ImageFont, ImageTk
+from pyperclip import copy
+from tkcalendar import DateEntry
+
+from icecream import ic
+
+class App:   
     def __init__(self, root):
         #setting title
         root.title("Virtual ID card creator")
@@ -86,7 +90,6 @@ class App:
         self.name_entry["fg"] = "#333333"
         self.name_entry["validate"]="key"
         self.name_entry["validatecommand"]= (vcmd, '%S')
-        self.name_entry.bind('<space>')
         self.name_entry.place(x=110,y=70,width=147,height=25)
 
         self.dob_entry=DateEntry(root)
@@ -106,14 +109,14 @@ class App:
     
         vcmd = root.register(self.validate)
 
-        mobile_number_entry=tk.Entry(root)
-        mobile_number_entry["borderwidth"] = "1px"
+        self.mobile_number_entry=tk.Entry(root)
+        self.mobile_number_entry["borderwidth"] = "1px"
         ft = tkFont.Font(family='Times',size=10)
-        mobile_number_entry["font"] = ft
-        mobile_number_entry["fg"] = "#333333"
-        mobile_number_entry["validate"]="key"
-        mobile_number_entry["validatecommand"] = (vcmd,'%P')
-        mobile_number_entry.place(x=110,y=220,width=147,height=25)
+        self.mobile_number_entry["font"] = ft
+        self.mobile_number_entry["fg"] = "#333333"
+        self.mobile_number_entry["validate"]="key"
+        self.mobile_number_entry["validatecommand"] = (vcmd,'%P')
+        self.mobile_number_entry.place(x=110,y=220,width=147,height=25)
 
         self.address_entry=tk.Text(root)
         self.address_entry["borderwidth"] = "1px"
@@ -207,6 +210,16 @@ class App:
         confirm_button.place(x=490,y=90,width=70,height=25)
         confirm_button["command"] = lambda: self.confirm(self.get_path())
 
+        save_id_button=tk.Button(root)
+        save_id_button["bg"] = "#efefef"
+        ft = tkFont.Font(family='Times', size=10)
+        save_id_button["font"] = ft
+        save_id_button["fg"] = "#000000"
+        save_id_button["justify"] = "center"
+        save_id_button["text"] = "Save ID"
+        save_id_button.place(x=280, y=400, width=75, height=25)
+        save_id_button["command"] = self.save_id
+
         exit_button=tk.Button(root)
         exit_button["bg"] = "#efefef"
         ft = tkFont.Font(family='Times',size=10)
@@ -214,7 +227,7 @@ class App:
         exit_button["fg"] = "#000000"
         exit_button["justify"] = "center"
         exit_button["text"] = "Exit"
-        exit_button.place(x=260,y=410,width=70,height=25)
+        exit_button.place(x=280,y=430,width=70,height=25)
         exit_button["command"] = self.exit
 
     def validate(self, text):
@@ -238,7 +251,8 @@ class App:
             return False
 
     def get_name(self):
-        return self.name_entry.get().title()
+        name = self.name_entry.get().title() 
+        return name
     
     def random_id(self):
         lower_limit = 1111111111
@@ -252,7 +266,11 @@ class App:
         return self.dob_entry.get()
     
     def get_blood_group(self):
-        return self.blood_group_entry.get()
+        blood_group = self.blood_group_entry.get()
+        return blood_group
+
+    def get_mobile_number(self):
+        return self.mobile_number_entry.get()
     
     def get_address(self):
         return self.address_entry.get("1.0", "end")
@@ -263,6 +281,7 @@ class App:
         ID: {self.get_id()}
         DoB: {self.get_date()}
         Blood Group: {self.get_blood_group()}
+        Mobile No: {self.get_mobile_number()}
         Address: {self.get_address()}
         '''
         return details
@@ -285,17 +304,51 @@ class App:
     def load_font(self):
         font = ImageFont.truetype('fonts/Calibri Regular.ttf', 40)
         return font
+    
+    def check_name_entry(self):
+        name_entry = self.get_name()
+        return True if name_entry=='' else False
+
+    def check_blood_group_entry(self):
+        blood_group_entry = self.get_blood_group()
+        return True if blood_group_entry=='' else False 
+
+    def check_mobile_number_entry(self):
+        mobile_number_entry = self.get_mobile_number()
+        return True if mobile_number_entry=='' else False
+
+    def check_address_entry(self):
+        address_entry = self.get_address()
+        return True if address_entry=='' else False
 
     def gen_id(self):
-        details = self.get_details()
-        image = self.get_image()
-        qr = self.get_qr()
-        id_template = self.get_template()
-        id_template.paste(im=image, box=(33, 175))
-        id_template.paste(im=qr, box=(815, 463))
-        edit_image = ImageDraw.Draw(id_template)
-        edit_image.text((200, 150), text=details, font=self.load_font(), fill=128)
-        id_template.save("Id.png")
+        if self.check_name_entry():
+            messagebox.showinfo('Enter Name', 'Please Enter your name')
+
+        elif self.check_blood_group_entry():
+            messagebox.showinfo('Enter Blood Group') 
+
+        elif self.check_mobile_number_entry():
+            messagebox.showinfo('Enter mobile number', 'Please enter your mobile number')
+            
+        elif self.check_address_entry():
+            messagebox.showinfo('Enter Address', 'Please Enter your address')
+
+        else:
+            details = self.get_details()
+            try:
+                id_image = self.get_image()
+            except AttributeError:
+                messagebox.showinfo('Image not selected', 'Please select a Image') 
+            else:
+                qr = self.get_qr()
+                id_template = self.get_template()
+                id_template.paste(im=id_image, box=(33, 175))
+                id_template.paste(im=qr, box=(815, 463))
+                edit_image = ImageDraw.Draw(id_template)
+                edit_image.text((200, 150), text=details, font=self.load_font(), fill=255)
+                id_template.save("Id.png")
+                messagebox.showinfo('ID generated', 'Your ID has been successfully generated')
 
     def show_qr(self):
         new_win = tk.Toplevel(root)
@@ -308,12 +361,14 @@ class App:
 
     def show_id(self):
         new_win = tk.Toplevel(root)
-        img = Image.open("id.png")
+        img = Image.open("Id.png")
         tkimage= ImageTk.PhotoImage(img)
         image_lbl = Label(new_win, image=tkimage)
         image_lbl.image = tkimage
         image_lbl.pack()
 
+    def clear_image_pick_entry(self):
+        self.image_pick_entry.delete(0,"end")
 
     def choose_image(self):
         path = askopenfilename(initialdir='/home/vaylon/github/qr_id/', filetypes=[('Jpeg files','*.jpg *.jpeg'), ('PNG files', '*.png')])
@@ -330,20 +385,30 @@ class App:
         image = Image.open(self.get_path())
         image = image.resize((192, 192))
         return image
-    
-    def clear_image_pick_entry(self):
-        self.image_pick_entry.delete(0,"end")
 
     def confirm(self, path):
-        image = self.get_image()
-        tkimage = ImageTk.PhotoImage(image)
-        display_picture = tk.Label(root, image=tkimage)
-        display_picture.image=tkimage
-        display_picture.place(x=290,y=130,width=192,height=192)
+        try:
+            image = self.get_image()
+            tkimage = ImageTk.PhotoImage(image)
+            display_picture = tk.Label(root, image=tkimage)
+            display_picture.image=tkimage
+            display_picture.place(x=290,y=130,width=192,height=192)
+        except AttributeError:
+            messagebox.showinfo('Select Image', 'Please Select a Image First!!!')
        
     def copy_id(self):
         text = copy(self.id_label['text'])
         messagebox.showinfo("Copied to clipboard", "Your ID has been copied to the clipboard")
+    
+    def save_id(self):
+        image_file = open("Id.png", 'rb')
+        im = image_file.read()
+        save_as = asksaveasfilename(defaultextension='.jpg', filetypes=(("Png file", ".png"),("jpeg file", '.jpg')) )
+        if save_as:
+            output_file=open(save_as, 'wb')
+            output_file.write(im)
+            output_file.close()
+        image_file.close()
 
     def exit(self):
         ask_exit = askyesno("Exit", "Do you want to exit?")
