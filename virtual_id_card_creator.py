@@ -22,7 +22,8 @@ class App:
         height=500
         screenwidth = root.winfo_screenwidth()
         screenheight = root.winfo_screenheight()
-        alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        alignstr = f'{width}x{height}+{(screenwidth - width) // 2}+{(screenheight - height) // 2}'
+        print(alignstr)
         root.geometry(alignstr)
         root.resizable(width=False, height=False)
         
@@ -419,5 +420,6 @@ class App:
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)
+    root.protocol("WM_DELETE_WINDOW", app.exit)
     root.mainloop()
     
